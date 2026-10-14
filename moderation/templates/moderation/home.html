@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de texto</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: #f3f4f6;
+            color: #1f2937;
+            font-family: Arial, sans-serif;
+        }
+
+        main {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 32px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px #00000012;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        p {
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        textarea {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 180px;
+            margin: 12px 0 16px;
+            padding: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font: inherit;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 8px;
+            background: #0f766e;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #115e59;
+        }
+
+        .resultado {
+            margin-top: 24px;
+            padding: 18px 20px;
+            border: 1px solid #99f6e4;
+            border-left: 5px solid #0f766e;
+            border-radius: 10px;
+            background: #f0fdfa;
+        }
+
+        .resultado.error {
+            border-color: #fecaca;
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .resultado.error h2 {
+            color: #b91c1c;
+        }
+
+        .nota {
+            font-size: 14px;
+        }
+
+        .puntuacion {
+            margin-top: 20px;
+        }
+
+        .encabezado-puntuacion {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 7px;
+        }
+
+        .barra {
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #d1d5db;
+        }
+
+        .barra span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: #0f766e;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Analizador de texto</h1>
+
+        <p>
+            Escribe o pega un texto para revisar distintas señales de lenguaje.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <label for="texto">Texto para analizar</label>
+
+            <textarea id="texto" name="texto" placeholder="Escribe aquí...">{{ texto_entrada }}</textarea>
+
+            <button type="submit">Analizar texto</button>
+        </form>
+
+        {% if resultado %}
+        {% if estado == "ok" %}
+        <section class="resultado">
+            <h2>Resultados del análisis</h2>
+            <p class="nota">
+                Son puntuaciones orientativas del modelo; no representan
+                el porcentaje de palabras ofensivas ni una decisión automática.
+            </p>
+
+            {% for item in resultado %}
+            <div class="puntuacion">
+                <div class="encabezado-puntuacion">
+                    <strong>
+                        {% if item.label == "toxic" %}Lenguaje tóxico
+                        {% elif item.label == "severe_toxic" %}Toxicidad severa
+                        {% elif item.label == "obscene" %}Lenguaje vulgar
+                        {% elif item.label == "threat" %}Amenaza
+                        {% elif item.label == "insult" %}Insulto
+                        {% elif item.label == "identity_hate" %}Ataque a un grupo de identidad
+                        {% else %}{{ item.label }}
+                        {% endif %}
+                    </strong>
+
+                    <span>{{ item.percentage|floatformat:2 }}%</span>
+                </div>
+
+                <div class="barra" role="progressbar" aria-valuenow="{{ item.percentage }}" aria-valuemin="0"
+                    aria-valuemax="100">
+                    <span style="width: {{ item.percentage }}%;"></span>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% else %}
+        <section class="resultado error">
+            <h2>Revisa el texto</h2>
+            <p>{{ resultado }}</p>
+        </section>
+        {% endif %}
+        {% endif %}
+    </main>
+</body>
+
+</html>
